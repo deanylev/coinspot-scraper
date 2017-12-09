@@ -13,11 +13,11 @@
       margin-top: 35px;
     }
 
-    .input-field input[type="number"]:focus+label {
+    .input-field input:focus+label {
       color: #1976D2 !important;
     }
 
-    .input-field input[type="number"]:focus {
+    .input-field input:focus {
       border-bottom: 1px solid #1976D2 !important;
       box-shadow: 0 1px 0 0 #1976D2 !important;
     }
@@ -66,8 +66,9 @@
   <div class="row">
     <div class="col s12">
       <ul class="tabs">
-        <li class="tab col s6"><a href="#walletTab">Wallet</a></li>
-        <li class="tab col s6"><a href="#amountsTab">Amounts</a></li>
+        <li class="tab col s4"><a href="#walletTab">Wallet</a></li>
+        <li class="tab col s4"><a href="#amountsTab">Amounts</a></li>
+        <li class="tab col s4"><a href="#userTab" id="userTabButton">Log In</a></li>
       </ul>
     </div>
   </div>
@@ -84,6 +85,36 @@
       <h5 class="center">Total Coins: <span id="coinAmount"></span></h5>
       <div class="row">
         <form id="coinInputs" class="col s12 l8 offset-l2"></form>
+      </div>
+    </div>
+    <div id="userTab">
+      <div class="logged-out">
+        <h3 class="center tab-title">Log In</h3>
+        <div class="row">
+          <form id="userForm" class="col s12 l8 offset-l2">
+            <div class="row">
+              <div class="input-field col s12">
+                <input id="emailInput" type="email" name="email">
+                <label for="emailInput">Email</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="input-field col s12">
+                <input id="passwordInput" type="password" name="password">
+                <label for="passwordInput">Password</label>
+              </div>
+            </div>
+            <p id="loginResponse" class="red-text"></p>
+            <br>
+            <button id="signInButton" class="btn blue darken-4 waves-effect waves-light" type="button">Sign In</button>
+          </form>
+        </div>
+      </div>
+      <div class="logged-in center hide">
+        <h3 class="tab-title">Signed In</h3>
+        <span id="emailAddress"></span>
+        <br><br>
+        <button id="signOutButton" class="btn blue darken-4 waves-effect waves-light" type="button">Sign Out</button>
       </div>
     </div>
   </div>
@@ -182,7 +213,7 @@
 
     getData();
 
-    setInterval(getData, 20000);
+    setInterval(getData, 30000);
 
     $('#refreshButton').click(getData);
 
@@ -192,37 +223,48 @@
           cloudCoins = {};
           data = JSON.parse(data);
           cloudCoins = JSON.parse(data.coins);
+          $('.logged-out').addClass('hide');
+          $('.logged-in').removeClass('hide');
+          $('#userTabButton').text(data.email);
+          $('#emailAddress').text(data.email);
         } else {
           cloudCoins = false;
+          $('.logged-in').addClass('hide');
+          $('.logged-out').removeClass('hide');
+          $('#userTabButton').text('Log In');
         }
       });
     }
 
-    userStatus();
-
-     function setCoins() {
-       $.ajax({
-         method: 'POST',
-         url: 'api/update_coins.php',
-         data: {
-           coins: JSON.stringify(cloudCoins)
-         }
-       });
-     }
+    function setCoins() {
+      $.ajax({
+        method: 'POST',
+        url: 'api/update_coins.php',
+        data: {
+          coins: JSON.stringify(cloudCoins)
+        }
+      });
+    }
 
     function signIn() {
       $.ajax({
         method: 'POST',
         url: 'api/sign_in.php',
-        data: {
-          email: 'dean.e.levinson@gmail.com'
-        },
+        data: $('#userForm').serialize(),
         success: function(response) {
-          console.log('Signed in');
-          userStatus();
+          if (response === 'success') {
+            console.log('Signed in');
+            $('#loginResponse').empty();
+            getData();
+          } else {
+            $('#loginResponse').text(response);
+          }
         }
       });
     }
+
+    $('#signInButton').click(signIn);
+    $('#signOutButton').click(signOut);
 
     function signOut() {
       $.ajax({
@@ -230,10 +272,9 @@
         url: 'api/sign_out.php',
         success: function(response) {
           console.log('Signed out');
+          getData();
         }
       });
-
-      userStatus();
     }
 
     function coinObject() {

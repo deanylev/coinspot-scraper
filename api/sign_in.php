@@ -7,13 +7,15 @@ include('sql.php');
 // Create user if they don't exist
 
 $email = $_POST['email'];
+$password = md5($_POST['password']);
+$query = $mysqli->query("SELECT * FROM coinspot_scraper.users WHERE email = '{$email}' AND password = '{$password}'");
 
-if (!$mysqli->query("SELECT * FROM coinspot_scraper.users WHERE email = '{$email}'")->num_rows) {
-  $mysqli->query("INSERT INTO coinspot_scraper.users (email) VALUES ('{$email}')");
+if (!$query->num_rows) {
+  //$mysqli->query("INSERT INTO coinspot_scraper.users (email) VALUES ('{$email}')");
+  echo "Invalid credentials.";
+} else {
+  // Create user session
+  session_start();
+  $_SESSION['user'] = $query->fetch_object()->id;
+  echo "success";
 }
-
-// Create user session
-
-session_start();
-
-$_SESSION['user'] = $mysqli->query("SELECT * FROM coinspot_scraper.users WHERE email = '{$email}'")->fetch_object()->id;
