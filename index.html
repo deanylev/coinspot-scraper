@@ -94,6 +94,9 @@
       let allCoins = [];
 
       $('#status').text('Refreshing...');
+      $('#refreshButton').attr('disabled', true);
+
+      console.log('Fetching data...');
 
       $.getJSON('http://www.whateverorigin.org/get?url=' + encodeURIComponent('http://coinspot.com.au/tradecoins') + '&callback=?', function(data) {
         $(data.contents).find('.tradeitem.hidden-xs.hidden-sm').each(function() {
@@ -114,6 +117,9 @@
 
           allCoins.push(coin.data('coin'));
         });
+
+        console.log(`Fetched ${allCoins.length} coins`, allCoins);
+        console.log(`User owns: ${Object.keys(coins).length}`, coins);
 
         $('#totalValue').text(totalValue.toFixed(2));
         $('#coinAmount').text(`${Object.keys(coins).length}/${allCoins.length}`);
@@ -164,6 +170,7 @@
         $('#status').empty();
         $('.hide-on-load').addClass('hide');
         $('.show-on-load').removeClass('hide');
+        $('#refreshButton').removeAttr('disabled');
       });
     }
 
