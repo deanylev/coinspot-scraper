@@ -88,7 +88,7 @@
     </div>
   </div>
   <script>
-    let userCoins = {};
+    let userCoins = false;
 
     function getData() {
       userStatus();
@@ -105,7 +105,7 @@
       $.getJSON('http://www.whateverorigin.org/get?url=' + encodeURIComponent('http://coinspot.com.au/tradecoins') + '&callback=?', function(data) {
         $(data.contents).find('.tradeitem.hidden-xs.hidden-sm').each(function() {
           let coin = $(this);
-          let amount = userCoins[coin.data('coin')];
+          let amount = coinObject()[coin.data('coin')];
           if (amount) {
             let buyValue = coin.find('.col-sm-2').eq(1).text().substr(1);
             coins.push({
@@ -154,7 +154,7 @@
             `
           <div class="row">
             <div class="input-field col s12">
-              <input id="coin${val}" class="coin-input" data-coin="${val}" type="number" min="0" value="${userCoins[val] || 0}">
+              <input id="coin${val}" class="coin-input" data-coin="${val}" type="number" min="0" value="${coinObject()[val] || 0}">
               <label class="active" for="coin${val}">${val}</label>
             </div>
           </div>
@@ -164,10 +164,10 @@
 
         $('.coin-input').change(function() {
           if ($(this).val() && $(this).val() !== '0') {
-            userCoins[$(this).data('coin')] = $(this).val();
+            coinObject()[$(this).data('coin')] = $(this).val();
             setCoins();
           } else {
-            delete userCoins[$(this).data('coin')];
+            delete coinObject()[$(this).data('coin')];
             setCoins();
           }
           getData();
@@ -189,8 +189,11 @@
     function userStatus() {
       $.get('api/status.php', function(data) {
         if (data !== 'fail') {
+          userCoins = {};
           data = JSON.parse(data);
           userCoins = JSON.parse(data.coins);
+        } else {
+          userCoins = false;
         }
       });
     }
@@ -203,9 +206,6 @@
          url: 'api/update_coins.php',
          data: {
            coins: JSON.stringify(userCoins)
-         },
-         success: function(response) {
-           console.log(response);
          }
        });
      }
@@ -235,6 +235,10 @@
       });
 
       userStatus();
+    }
+
+    function coinObject() {
+      return userCoins || localStorage;
     }
   </script>
 </body>
