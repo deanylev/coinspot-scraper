@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>CoinSpot Scraper</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+  <style>
+    .progress {
+      margin-top: 50px;
+      background-color: #64b5f6;
+    }
+
+    .tab-title {
+      margin-top: 35px;
+    }
+
+    .input-field input[type="text"]:focus+label {
+      color: #1976D2 !important;
+    }
+
+    .input-field input[type=text]:focus {
+      border-bottom: 1px solid #1976D2 !important;
+      box-shadow: 0 1px 0 0 #1976D2 !important;
+    }
+
+    .tabs .tab a,
+    .tabs .tab a:hover {
+      color: #1976D2 !important;
+    }
+
+    .tabs .indicator,
+    .indeterminate {
+      background-color: #1976D2 !important;
+    }
+
+    #refreshButton {
+      margin-right: 6.5px;
+    }
+  </style>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+
+<body class="container">
+  <h1 class="center">CoinSpot Scraper</h1>
+  <div class="row">
+    <div class="col s12">
+      <ul class="tabs">
+        <li class="tab col s6"><a href="#walletTab">Wallet</a></li>
+        <li class="tab col s6"><a href="#amountsTab">Amounts</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="progress hide-on-load">
+    <div class="indeterminate"></div>
+  </div>
+  <div class="show-on-load hide">
+    <div id="walletTab">
+      <h3 class="center tab-title">Wallet</h3>
+      <h5 class="center">Your Total Wallet Value: $<span id="totalValue"></span></h5>
+      <button id="refreshButton" class="btn-floating blue darken-4 waves-effect waves-light"><i class="material-icons">refresh</i></button>
+      <span id="status"></span>
+      <div id="coins"></div>
+    </div>
+    <div id="amountsTab">
+      <h3 class="center tab-title">Amounts</h3>
+      <h5 class="center">Your Total Coins: <span id="coinAmount"></span></h5>
+      <div class="row">
+        <form id="coinInputs" class="col s8 offset-s4"></form>
+      </div>
+    </div>
+  </div>
+  <script>
+    function getData() {
+      let totalValue = 0;
+      let coins = [];
+      let allCoins = [];
+
+      $('#status').text('Refreshing...');
+
+      $.getJSON('http://www.whateverorigin.org/get?url=' + encodeURIComponent('http://coinspot.com.au/tradecoins') + '&callback=?', function(data) {
+        $(data.contents).find('.tradeitem.hidden-xs.hidden-sm').each(function() {
+          let coin = $(this);
+          let amount = localStorage.getItem(`coin-${coin.data('coin')}`);
+          if (amount) {
+            let buyValue = coin.find('.col-sm-2').eq(1).text().substr(1);
+            coins.push({
+              name: coin.data('coin'),
+              fullName: coin.find('.col-sm-2').eq(0).text().substr(2),
+              amount: amount,
+              price: buyValue,
+              value: amount * buyValue
+            });
+
+            totalValue += amount * buyValue;
+          }
+
+          allCoins.push(coin.data('coin'));
+        });
+
+        $('#totalValue').text(totalValue.toFixed(2));
+        $('#coinAmount').text(Object.keys(coins).length);
+
+        coins.sort(function(a, b) {
+          return b.value - a.value;
+        });
+
+        $('#coins').empty();
+        $('#coinInputs').empty();
+
+        $.each(coins, function(key, val) {
+          $('#coins').append(
+            `
+          <div class="card blue darken-2 coin">
+            <div class="card-content white-text">
+              <span class="card-title">${val.name}</span>
+              <span>(${val.fullName})</span>
+              <h5>${val.amount} &times; $${val.price} = $${val.value.toFixed(2)}</h5>
+            </div>
+          </div>
+          `
+          );
+        });
+
+        $.each(allCoins, function(key, val) {
+          $('#coinInputs').append(
+            `
+          <div class="row">
+            <div class="input-field col s6">
+              <input id="coin${val}" class="coin-input" data-coin="${val}" type="number" min="0" value="${localStorage.getItem(`coin-${val}`) || 0}">
+              <label class="active" for="coin${val}">${val}</label>
+            </div>
+          </div>
+          `
+          );
+        });
+
+        $('.coin-input').change(function() {
+          if ($(this).val()) {
+            localStorage.setItem(`coin-${$(this).data('coin')}`, $(this).val());
+          } else {
+            localStorage.removeItem(`coin-${$(this).data('coin')}`);
+          }
+          getData();
+        });
+
+        $('#status').empty();
+        $('.hide-on-load').addClass('hide');
+        $('.show-on-load').removeClass('hide');
+      });
+    }
+
+    getData();
+
+    $('#refreshButton').click(getData);
+  </script>
+</body>
+
+</html>
