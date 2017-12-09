@@ -88,7 +88,11 @@
     </div>
   </div>
   <script>
+    let userCoins = {};
+
     function getData() {
+      userStatus();
+
       let totalValue = 0;
       let coins = [];
       let allCoins = [];
@@ -101,7 +105,7 @@
       $.getJSON('http://www.whateverorigin.org/get?url=' + encodeURIComponent('http://coinspot.com.au/tradecoins') + '&callback=?', function(data) {
         $(data.contents).find('.tradeitem.hidden-xs.hidden-sm').each(function() {
           let coin = $(this);
-          let amount = localStorage.getItem(`coin-${coin.data('coin')}`);
+          let amount = userCoins[coin.data('coin')];
           if (amount) {
             let buyValue = coin.find('.col-sm-2').eq(1).text().substr(1);
             coins.push({
@@ -150,7 +154,7 @@
             `
           <div class="row">
             <div class="input-field col s12">
-              <input id="coin${val}" class="coin-input" data-coin="${val}" type="number" min="0" value="${localStorage.getItem(`coin-${val}`) || 0}">
+              <input id="coin${val}" class="coin-input" data-coin="${val}" type="number" min="0" value="${userCoins[val] || 0}">
               <label class="active" for="coin${val}">${val}</label>
             </div>
           </div>
@@ -160,9 +164,11 @@
 
         $('.coin-input').change(function() {
           if ($(this).val() && $(this).val() !== '0') {
-            localStorage.setItem(`coin-${$(this).data('coin')}`, $(this).val());
+            userCoins[$(this).data('coin')] = $(this).val();
+            setCoins();
           } else {
-            localStorage.removeItem(`coin-${$(this).data('coin')}`);
+            delete userCoins[$(this).data('coin')];
+            setCoins();
           }
           getData();
         });
@@ -179,6 +185,57 @@
     setInterval(getData, 20000);
 
     $('#refreshButton').click(getData);
+
+    function userStatus() {
+      $.get('api/status.php', function(data) {
+        if (data !== 'fail') {
+          data = JSON.parse(data);
+          userCoins = JSON.parse(data.coins);
+        }
+      });
+    }
+
+    userStatus();
+
+     function setCoins() {
+       $.ajax({
+         method: 'POST',
+         url: 'api/update_coins.php',
+         data: {
+           coins: JSON.stringify(userCoins)
+         },
+         success: function(response) {
+           console.log(response);
+         }
+       });
+     }
+
+    function signIn() {
+      $.ajax({
+        method: 'POST',
+        url: 'api/sign_in.php',
+        data: {
+          email: 'dean.e.levinson@gmail.com'
+        },
+        success: function(response) {
+          console.log('Signed in');
+        }
+      });
+
+      userStatus();
+    }
+
+    function signOut() {
+      $.ajax({
+        method: 'POST',
+        url: 'api/sign_out.php',
+        success: function(response) {
+          console.log('Signed out');
+        }
+      });
+
+      userStatus();
+    }
   </script>
 </body>
 
