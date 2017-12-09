@@ -9,11 +9,6 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
   <style>
-    .progress {
-      margin-top: 50px;
-      background-color: #64b5f6;
-    }
-
     .tab-title {
       margin-top: 35px;
     }
@@ -32,9 +27,17 @@
       color: #1976D2 !important;
     }
 
-    .tabs .indicator,
-    .indeterminate {
+    .tabs .indicator {
       background-color: #1976D2 !important;
+    }
+
+    .preloader-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: auto;
     }
 
     #refreshButton {
@@ -46,6 +49,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 
 <body class="container">
+  <div class="preloader-wrapper big active hide-on-load">
+    <div class="spinner-layer spinner-blue-only">
+      <div class="circle-clipper left">
+        <div class="circle"></div>
+      </div>
+      <div class="gap-patch">
+        <div class="circle"></div>
+      </div>
+      <div class="circle-clipper right">
+        <div class="circle"></div>
+      </div>
+    </div>
+  </div>
   <h1 class="center">CoinSpot Scraper</h1>
   <div class="row">
     <div class="col s12">
@@ -55,20 +71,17 @@
       </ul>
     </div>
   </div>
-  <div class="progress hide-on-load">
-    <div class="indeterminate"></div>
-  </div>
   <div class="show-on-load hide">
     <div id="walletTab">
       <h3 class="center tab-title">Wallet</h3>
-      <h5 class="center">Your Total Wallet Value: $<span id="totalValue"></span></h5>
+      <h5 class="center">Total Wallet Value: $<span id="totalValue"></span></h5>
       <button id="refreshButton" class="btn-floating blue darken-4 waves-effect waves-light"><i class="material-icons">refresh</i></button>
       <span id="status"></span>
       <div id="coins"></div>
     </div>
     <div id="amountsTab">
       <h3 class="center tab-title">Amounts</h3>
-      <h5 class="center">Your Total Coins: <span id="coinAmount"></span></h5>
+      <h5 class="center">Total Coins: <span id="coinAmount"></span></h5>
       <div class="row">
         <form id="coinInputs" class="col s8 offset-s4"></form>
       </div>
@@ -140,7 +153,7 @@
         });
 
         $('.coin-input').change(function() {
-          if ($(this).val()) {
+          if ($(this).val() && $(this).val() !== '0') {
             localStorage.setItem(`coin-${$(this).data('coin')}`, $(this).val());
           } else {
             localStorage.removeItem(`coin-${$(this).data('coin')}`);
@@ -155,6 +168,8 @@
     }
 
     getData();
+
+    setInterval(getData, 20000);
 
     $('#refreshButton').click(getData);
   </script>
