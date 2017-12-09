@@ -2,7 +2,7 @@
 
 // MySQL
 
-include("sql.php");
+include('sql.php');
 
 $coins = $_POST['coins'];
 
